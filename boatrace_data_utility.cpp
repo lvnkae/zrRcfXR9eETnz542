@@ -117,6 +117,19 @@ uint32_t BlankRaceID() { return 0; }
 bool IsValidRaceID(uint32_t rc_id) { return rc_id > 0; }
 
 /*!
+ *  @brief  レース番号(第nレース)：空
+ */
+int32_t BlankRaceNumber() { return 0; }
+/*!
+ *  @brief  レース番号：最初レース
+ */
+int32_t FirstRaceNumber() { return 1; }
+/*!
+ *  @brief  レース番号：最終レース
+ */
+int32_t LastRaceNumber() { return 12; }
+
+/*!
  *  @brief  message出力
  *  @param  msg         message
  *  @param  func_name   発生関数名

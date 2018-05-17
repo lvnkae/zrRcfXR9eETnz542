@@ -8,8 +8,11 @@
 #include <memory>
 #include <string>
 
+namespace garnet { struct YYMMDD; }
+
 namespace boatrace
 {
+class ScheduleAtDay;
 
 class ScheduleCollector
 {
@@ -28,6 +31,14 @@ public:
      *  @retval true        収集処理完了
      */
     bool Update(int64_t tickCount);
+
+    /*!
+     *  @brief  1日分の開催スケジュールを得る
+     *  @param[in]  date        開催年月日
+     *  @param[out] o_schedule  開催スケジュール
+     */
+    void GetScheduleAtDay(const garnet::YYMMDD& date, ScheduleAtDay& o_schedule) const;
+
 
 private:
     ScheduleCollector();

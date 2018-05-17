@@ -6,6 +6,7 @@
  */
 #pragma once
 
+#include "http/http_proxy_config_fwd.h"
 #include "python/python_config_fwd.h"
 
 #include <memory>
@@ -38,10 +39,21 @@ public:
      */
     static const garnet::python_config_ref GetPythonConfig();
     /*!
+     *  @brief  proxy設定を得る
+     */
+    static const web::http::proxy_config_ref GetProxyConfig();
+    /*!
      *  @brief  データディレクトリを得る
      */
     static const std::string GetDataDir();
-
+    /*!
+     *  @brief  開催スケジュール取得に使うURLを得る
+     */
+    static const std::wstring GetScheduleSiteURL();
+    /*!
+     *  @brief  オッズ取得に使うURLを得る
+     */
+    static const std::wstring GetOddsSiteURL();
 
 private:
     Environment();
@@ -55,9 +67,15 @@ private:
     void initialize();
 
     //! python設定  
-    std::shared_ptr<garnet::python_config> m_python_config;
+    garnet::python_config_ptr m_python_config;
+    //! proxy設定  
+    web::http::proxy_config_ptr m_proxy_config;
     //! データ出力ディレクトリ
     std::string m_data_dir;
+    //! 開催スケジュール取得URL
+    std::wstring m_schedule_url;
+    //! オッズ取得URL
+    std::wstring m_odds_url;
 
     //! 自身の弱参照
     static std::weak_ptr<Environment> m_pInstance;

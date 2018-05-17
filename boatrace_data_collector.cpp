@@ -6,6 +6,7 @@
 #include "boatrace_data_collector.h"
 
 #include "boatrace_schedule_collector.h"
+#include "boatrace_odds_collector.h"
 
 namespace boatrace
 {
@@ -26,16 +27,24 @@ private:
     eSequence m_sequence;   //! シーケンス
 
     ScheduleCollector m_schedule_col;   //! 開催スケジュールデータ収集者
-
+    OddsCollector m_odds_col;           //! オッズデータ収集者
 
 public:
     /*!
-     *  @param  start_date  収集開始年月(YYYY/MM)
-     *  @param  end_ym      収集終了年月(YYYY/MM)
+     *  @param  sch_start_ym    開催スケジュール収集開始年月(YYYY/MM)
+     *  @param  sch_end_ym      開催スケジュール収集終了年月(YYYY/MM)
+     *  @param  dat_start_ym    レースデータ収集開始年月(YYYY/MM)
+     *  @param  dat_end_ym      レースデータ収集開始年月(YYYY/MM)
+     *  @param  race_type       データ収集対象レースタイプ
      */
-    PIMPL(const std::string& start_ym, const std::string& end_ym)
+    PIMPL(const std::string& sch_start_ym,
+          const std::string& sch_end_ym,
+          const std::string& dat_start_ym,
+          const std::string& dat_end_ym,
+          const std::unordered_set<eRaceType>& race_type)
     : m_sequence(SEQ_INITIALIZE)
-    , m_schedule_col(start_ym, end_ym)
+    , m_schedule_col(sch_start_ym, sch_end_ym)
+    , m_odds_col(dat_start_ym, dat_end_ym, race_type)
     {
     }
 
@@ -56,6 +65,11 @@ public:
             }
             break;
         case SEQ_COLLECT_ODDS:
+            if (m_odds_col.Update(tickCount, m_schedule_col)) {
+                m_sequence = SEQ_COLLECT_RACE;
+            }
+            break;
+        case SEQ_COLLECT_RACE:
             return true;
             break;
         case SEQ_ERROR:
@@ -66,11 +80,18 @@ public:
 };
 
 /*!
- *  @param  start_date  収集開始年月(YYYY/MM)
- *  @param  end_ym      収集終了年月(YYYY/MM)
+ *  @param  sch_start_ym    開催スケジュール収集開始年月(YYYY/MM)
+ *  @param  sch_end_ym      開催スケジュール収集終了年月(YYYY/MM)
+ *  @param  dat_start_ym    レースデータ収集開始年月(YYYY/MM)
+ *  @param  dat_end_ym      レースデータ収集開始年月(YYYY/MM)
+ *  @param  race_type       データ収集対象レースタイプ
  */
-RaceDataCollector::RaceDataCollector(const std::string& start_ym, const std::string& end_ym)
-: m_pImpl(new PIMPL(start_ym, end_ym))
+RaceDataCollector::RaceDataCollector(const std::string& sch_start_ym,
+                                     const std::string& sch_end_ym,
+                                     const std::string& dat_start_ym,
+                                     const std::string& dat_end_ym,
+                                     const std::unordered_set<eRaceType>& race_type)
+: m_pImpl(new PIMPL(sch_start_ym, sch_end_ym, dat_start_ym, dat_end_ym, race_type))
 {
 }
 RaceDataCollector::~RaceDataCollector()

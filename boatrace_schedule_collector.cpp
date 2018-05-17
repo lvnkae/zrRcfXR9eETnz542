@@ -7,6 +7,7 @@
 
 #include "boatrace_data.h"
 #include "boatrace_data_utility.h"
+#include "boatrace_schedule_data.h"
 #include "environment.h"
 
 #include "utility/utility_datetime.h"
@@ -45,6 +46,7 @@ private:
 
     boost::python::api::object m_python;    //!< pythonスクリプトオブジェクト
 
+    const std::wstring m_url;       //!< 収集URL
     const garnet::YYMM m_start_ym;  //!< 収集開始年月
     const garnet::YYMM m_end_ym;    //!< 収集終了年月
     garnet::YYMM m_next_req_ym;     //!< 次に要求する年月
@@ -192,7 +194,7 @@ private:
         }
         const int32_t year = python::extract<int>(t[1]);
         const int32_t month = python::extract<int>(t[2]);
-        if (src_yymm.m_year != year && src_yymm.m_month != month) {
+        if (src_yymm.m_year != year || src_yymm.m_month != month) {
             return false; // 要求した年月と異なる
         }
         const python::list mon_race_name = python::extract<python::list>(t[3]);
@@ -260,18 +262,10 @@ private:
      */
     void RequestScheduleData()
     {
-        const std::string req_ym_str(std::move(m_next_req_ym.to_string()));
-
-        if (m_schedule.find(req_ym_str) != m_schedule.end()) {
-            // もうある
-            PRINT_MESSAGE("already exist schedule : " + req_ym_str);
-            m_next_req_ym.inc_month();
-            return;
-        }
-
         m_wait_response = true;
+        const std::string req_ym_str(std::move(m_next_req_ym.to_string()));
         //
-        std::wstring url(L"https://www.boatrace.jp/owpc/pc/race/monthlyschedule");
+        std::wstring url(m_url);
         const std::wstring ym_str(
             std::move(garnet::utility_string::ToWstring(req_ym_str)));
         garnet::utility_http::AddItemToURL(L"ym", ym_str, url);
@@ -316,14 +310,30 @@ private:
             if (m_next_req_ym > m_end_ym) {
                 // レース名JSON出力
                 m_race_name.output_json(m_start_ym, m_end_ym, Environment::GetDataDir());
+                // レース種別ごとの開催日数合計取得/画面出力
+                {
+                    std::map<eRaceType, int32_t> counter;
+                    for (const auto& schedule: m_schedule) {
+                        schedule.second.count_race_by_type(counter);
+                    }
+                    for (const auto& cnt: counter) {
+                        PRINT_MESSAGE("race_type(" + std::to_string(cnt.first) + ") cnt = " + std::to_string(cnt.second));
+                    }
+                }
                 return true;
             } else {
-                // 8秒(以上)間隔でデータ取得
-                const int32_t REQ_INTV_SEC = 4;
-                const int64_t REQ_INTV_MS
-                    = garnet::utility_datetime::ToMiliSecondsFromSecond(REQ_INTV_SEC);
-                if (tickCount - m_last_rcv_tick > REQ_INTV_MS) {
-                    RequestScheduleData();
+                if (m_schedule.find(m_next_req_ym.to_string()) != m_schedule.end()) {
+                    // 取得済みならば即翌月へ
+                    PRINT_MESSAGE("already exist schedule : " + m_next_req_ym.to_string());
+                    m_next_req_ym.inc_month();
+                } else {
+                    // 4秒(以上)間隔でデータ取得
+                    const int32_t REQ_INTV_SEC = 4;
+                    const int64_t REQ_INTV_MS
+                        = garnet::utility_datetime::ToMiliSecondsFromSecond(REQ_INTV_SEC);
+                    if (tickCount - m_last_rcv_tick > REQ_INTV_MS) {
+                        RequestScheduleData();
+                    }
                 }
             }
         }    
@@ -369,6 +379,7 @@ public:
         std::move(
             garnet::utility_python::PreparePythonScript(
                 Environment::GetPythonConfig(), "html_parser_schedule.py")))
+    , m_url(std::move(Environment::GetScheduleSiteURL()))
     , m_start_ym(garnet::YYMM::Create(start_ym))
     , m_end_ym(garnet::YYMM::Create(end_ym))
     , m_next_req_ym(m_start_ym)
@@ -403,6 +414,20 @@ public:
 
         return false;
     }
+
+    /*!
+     *  @brief  1日分の開催スケジュールを得る
+     *  @param[in]  date        開催年月日
+     *  @param[out] o_schedule  開催スケジュール
+     */
+    void GetScheduleAtDay(const garnet::YYMMDD& date, ScheduleAtDay& o_schedule) const
+    {
+        const auto it_sch_at_mon = m_schedule.find(std::move(date.to_yymm().to_string()));
+        if (it_sch_at_mon == m_schedule.end()) {
+            return; // 指定年月の開催スケジュールは存在しない
+        }
+        it_sch_at_mon->second.get_at_day(date.m_day, o_schedule);
+    }
 };
 
 /*!
@@ -424,6 +449,16 @@ ScheduleCollector::~ScheduleCollector()
 bool ScheduleCollector::Update(int64_t tickCount)
 {
     return m_pImpl->Update(tickCount);
+}
+
+/*!
+ *  @brief  1日分の開催スケジュールを得る
+ *  @param[in]  date        開催年月日
+ *  @param[out] o_schedule  開催スケジュール
+ */
+void ScheduleCollector::GetScheduleAtDay(const garnet::YYMMDD& date, ScheduleAtDay& o_schedule) const
+{
+    m_pImpl->GetScheduleAtDay(date, o_schedule);
 }
 
 } // namespace boatrace

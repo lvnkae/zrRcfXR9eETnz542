@@ -5,7 +5,6 @@ import html_parser_utility
 import function_utility
 
 #   @brief  1ヶ月分のスケジュールを切り出すclass
-#   @note   SBI-mobile[バックアップ]サイト<汎用>
 class ScheduleParserAtMonth(html_parser_utility.HTMLParser):
  
     def __init__(self):

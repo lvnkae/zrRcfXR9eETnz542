@@ -7,6 +7,9 @@
 
 #include <memory>
 #include <string>
+#include <unordered_set>
+
+#include "boatrace_data_define.h"
 
 namespace boatrace
 {
@@ -15,10 +18,17 @@ class RaceDataCollector
 {
 public:
     /*!
-     *  @param  start_date  収集開始年月(YYYY/MM)
-     *  @param  end_ym      収集終了年月(YYYY/MM)
+     *  @param  sch_start_ym    開催スケジュール収集開始年月(YYYY/MM)
+     *  @param  sch_end_ym      開催スケジュール収集終了年月(YYYY/MM)
+     *  @param  dat_start_ym    レースデータ収集開始年月(YYYY/MM)
+     *  @param  dat_end_ym      レースデータ収集開始年月(YYYY/MM)
+     *  @param  race_type       データ収集対象レースタイプ
      */
-    RaceDataCollector(const std::string& start_ym, const std::string& end_ym);
+    RaceDataCollector(const std::string& sch_start_ym,
+                      const std::string& sch_end_ym,
+                      const std::string& dat_start_ym,
+                      const std::string& dat_end_ym,
+                      const std::unordered_set<eRaceType>& race_type);
     ~RaceDataCollector();
 
     /*!

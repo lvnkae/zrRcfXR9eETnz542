@@ -15,89 +15,6 @@ namespace boatrace
 {
 
 /*!
- *  @brief  開催レース情報(1日分)
- */
-struct sRaceAtDay
-{
-    eRaceType m_type;           //!< レース種別
-    uint32_t m_id;              //!< レースID
-    int32_t m_days;             //!< 開催n日目
-
-    sRaceAtDay();
-    sRaceAtDay(eRaceType rc_type, uint32_t rc_id, int32_t days)
-    : m_type(rc_type)
-    , m_id(rc_id)
-    , m_days(days)
-    {
-    }
-
-    /*!
-     *  @brief  空か
-     */
-    bool empty() const;
-};
-
-/*!
- *  @brief  開催スケジュール(1ヶ月分)
- */
-class ScheduleAtMonth
-{
-private:
-    //! 1レース場分の月開催スケジュール<暦日, 開催レース情報(1日分)>
-    typedef std::map<int32_t, sRaceAtDay> ScheduleInStadium;
-    //! 月開催スケジュール<暦日, 開催レース情報(1日分)>
-    std::map<eStadiumID, ScheduleInStadium> m_schedule;
-
-public:
-    /*!
-     *  @brief  データが空か
-     *  @param  st_id   レース場ID
-     */
-    bool empty() const { return m_schedule.empty(); }
-    /*!
-     *  @brief  指定レース場のデータが空か
-     *  @param  st_id   レース場ID
-     */
-    bool empty(eStadiumID st_id) const;
-    /*!
-     *  @brief  スケジュール登録(最小単位)
-     *  @param  month_day   暦日
-     *  @param  st_id       レース場ID
-     *  @param  rc_type     レース種別
-     *  @param  rc_id       レース固有ID
-     *  @param  days        開催n日目
-     *  @note   任意のレース場における1日分の開催情報を登録する
-     */
-    void entry(int32_t month_day,
-               eStadiumID st_id,
-               eRaceType rc_type,
-               uint32_t rc_id,
-               int32_t days);
-
-    /*!
-     *  @brief  当月最終レースを得る
-     *  @param  st_id   レース場ID
-     */
-    sRaceAtDay get_last_race(eStadiumID st_id) const;
-
-    /*!
-     *  @brief  JSON入力
-     *  @param  date    開催スケジュールデータの年月
-     *  @param  path    入力パス
-     *  @note   入力ファイル名は'br_schedule_yyyymm.json'
-     */
-    void input_json(const garnet::YYMM& date, const std::string& path);
-    /*!
-     *  @brief  JSON出力
-     *  @param  date    開催スケジュールデータの年月
-     *  @param  path    出力パス
-     *  @note   出力ファイル名は'br_schedule_yyyymm.json'
-     */
-    void output_json(const garnet::YYMM& date, const std::string& path) const;
-};
-
-
-/*!
  *  @brief  ボートレース名群
  */
 class BoatraceNames
@@ -148,6 +65,82 @@ public:
     void output_json(const garnet::YYMM& start_date,
                      const garnet::YYMM& end_date,
                      const std::string& path) const;
+};
+
+/*!
+ *  @brief  オッズデータ(1出走者(枠)分)
+ */
+struct sOdds
+{
+    //! 3連単<枠番, <枠番, オッズ>>
+    std::map<int32_t, std::map<int32_t, float32>> m_wins3;
+    //! 2連単<枠番, オッズ>
+    std::map<int32_t, float32> m_wins2;
+    //! 3連複<枠番, <枠番, オッズ>>
+    std::map<int32_t, std::map<int32_t, float32>> m_place3;
+    //! 2連複<枠番, オッズ>
+    std::map<int32_t, float32> m_place2;
+};
+
+/*!
+ *  @brief  オッズデータ(1レース分)
+ */
+struct sOddsAtRace
+{
+    //! <枠番, 1出走者(枠)分オッズ>
+    std::map<int32_t, sOdds> m_data;    
+};
+
+/*!
+ *  @brief  オッズデータ(一か月分)
+ */
+class OddsAtMonth
+{
+private:
+    //! 1開場分のオッズデータ<レース番号(第nレース), オッズデータ(1レース分)>
+    typedef std::map<int32_t, sOddsAtRace> OddsAtStadium;
+    //! 1日分のオッズデータ<レース場ID, オッズデータ(1開場分)>
+    typedef std::map<eStadiumID, OddsAtStadium> OddsAtDay;
+    //! 1ヶ月分のオッズデータ<暦日, オッズデータ(1日分)>
+    std::map<int32_t, OddsAtDay> m_odds;
+
+public:
+    /*!
+     *  @brief  データが空か
+     */
+    bool empty() const { return m_odds.empty(); }
+    /*!
+     *  @brief  存在確認
+     *  @param  month_day   暦日
+     *  @param  st_id       レース場ID
+     *  @param  rc_no       レース番号(第nレース)
+     *  @retval false       存在しない
+     */
+    bool exists(int32_t month_day, eStadiumID st_id, int32_t rc_no) const;
+
+    /*!
+     *  @brief  登録
+     *  @param  month_day   暦日
+     *  @param  st_id       レース場ID
+     *  @param  rc_no       レース番号(第nレース)
+     *  @param  rc_odds     オッズデータ(1レース分)
+     */
+    void entry(int32_t month_day, eStadiumID st_id, int32_t rc_no, sOddsAtRace&& rc_odds);
+
+    /*!
+     *  @brief  JSON入力
+     *  @param  date    開催スケジュールデータの年月
+     *  @param  path    入力パス
+     *  @note   入力ファイル名は'br_schedule_yyyymm.json'
+     */
+    void input_json(const garnet::YYMM& date, const std::string& path);
+    /*!
+     *  @brief  JSON出力
+     *  @param  date    開催スケジュールデータの年月
+     *  @param  path    出力パス
+     *  @note   出力ファイル名は'br_odds_yyyymm.json'
+     */
+    void output_json(const garnet::YYMM& date, const std::string& path) const;
 };
 
 } // namespace boatrace

@@ -36,6 +36,19 @@ uint32_t BlankRaceID();
  */
 bool IsValidRaceID(uint32_t rc_id);
 
+/*!
+ *  @brief  レース番号(第nレース)：空
+ */
+int32_t BlankRaceNumber();
+/*!
+ *  @brief  レース番号：最初レース
+ */
+int32_t FirstRaceNumber();
+/*!
+ *  @brief  レース番号：最終レース
+ */
+int32_t LastRaceNumber();
+
 
 /*!
  *  @brief  message出力

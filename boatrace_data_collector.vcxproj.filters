@@ -42,6 +42,12 @@
     <ClInclude Include="boatrace_data.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="boatrace_odds_collector.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="boatrace_schedule_data.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -63,6 +69,12 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="boatrace_data.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="boatrace_odds_collector.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="boatrace_schedule_data.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
